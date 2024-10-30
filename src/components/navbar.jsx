@@ -8,33 +8,57 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate, useLocation } from 'react-router-dom'; // Import useNavigate and useLocation
 
-const Navbar = () => {
+const Navbar = ({setFilterParams}) => {
   const [username, setUsername] = useState(""); // Initialize with empty string
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(""); // State for search bar
   const navigate = useNavigate(); // Hook to navigate programmatically
+  const location = useLocation(); // Hook to get the current URL
 
   // Fetch username from localStorage when the component mounts
   useEffect(() => {
     const authInfo = JSON.parse(localStorage.getItem('authInfo')); // Assuming the username is stored as 'username'
     if (authInfo) {
-      console.log(authInfo);
       setUsername(authInfo.name);
     } else {
       setUsername('Guest'); // Fallback if no username is found
     }
   }, []);
 
+  // Fetch search term from URL params when the component mounts
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchParam = params.get('query'); // Extract query parameter
+    if (searchParam) {
+      setSearchTerm(searchParam); // Set search bar value
+    }
+  }, [location]);
+
   // Handle the logout action
   const handleLogout = () => {
     localStorage.removeItem('authInfo'); // Clear 'authInfo' from localStorage
-    navigate('/'); // Navigate to the home page
+    
   };
 
   const handleLogin = () => {
     localStorage.removeItem('authInfo');
     navigate('/SignUp');
+  };
+
+  // Handle search input change and navigate to the new URL
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value);
+    localStorage.setItem("query",e.target.value);
+
+  };
+
+  // Handle pressing Enter key to trigger search navigation
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && searchTerm) {
+      navigate(`/search?query=${searchTerm}`);
+    }
   };
 
   const menuItems = [
@@ -58,6 +82,9 @@ const Navbar = () => {
           <Input 
             type="search" 
             placeholder="Search..." 
+            value={searchTerm} // Set searchTerm state as the value of the input
+            onChange={handleSearch} // Update search term as user types
+            onKeyDown={handleKeyDown} // Navigate when "Enter" is pressed
             className="pl-8 bg-white focus:ring-offset-0 focus-visible:ring-0 text-[black] placeholder:text-[#9e92aa]"
           />
         </div>

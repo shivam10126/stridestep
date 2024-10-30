@@ -27,7 +27,7 @@ export default function NewsLetter() {
   const handleSubmit = (e) => {
     e.preventDefault()
     // Here you would typically send the email to your backend
-    console.log('Submitted email:', email)
+    // console.log('Submitted email:', email)
     setIsSubmitted(true)
     setShowPopup(true)
     setEmail('')

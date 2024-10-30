@@ -1,3 +1,5 @@
+const { transform } = require('framer-motion');
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -43,11 +45,35 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        main: {
+          1: '#6e36aa',
+          2: '#eb432f',
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        moveRight: {
+          '0%': { transform: 'scale(1.2) translateX(0)' },
+          '50%': { transform: 'scale(1.5) translateX(40px)' },
+          '100%': { transform: 'scale(1.7) translateX(150px)' },
+        },
+        "accordion-down": {
+          from: { height: 0 },
+          to: { height: "var(--radix-accordion-content-height)" },
+        },
+        "accordion-up": {
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: 0 },
+        },
+      },
+      animation: {
+        'move-right': 'moveRight 1.5s ease-in-out forwards',
+        "accordion-down": "accordion-down 0.2s ease-out",
+        "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
   },

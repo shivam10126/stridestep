@@ -72,7 +72,7 @@ export default function CarouselComponent() {
   }, [])
 
   const handleClick = (name) => {
-    console.log(name)
+    // console.log(name)
   }
 
   return (

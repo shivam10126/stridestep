@@ -18,6 +18,7 @@ import Boots from "../assets/Boots.jpg"
 import Espadrilles from "../assets/Espadrilles.jpg"
 import Flops from "../assets/Flops.jpg"
 import Brogues from "../assets/Brogues.jpg"
+import { useNavigate } from 'react-router-dom'
 
 const shoes = [
   { name: "Running Shoes",image:Running },
@@ -33,7 +34,13 @@ const shoes = [
 ]
 
 export default function CarouselComponent() {
-  const [api, setApi] = useState(null)
+  const [api, setApi] = useState(null);
+
+  const navigate = useNavigate(); 
+
+  const handleClick = (param) => {
+    navigate(`./search?query=${param}&type=${param}`);
+  }
 
   const scrollToNext = useCallback(() => {
     if (api) {
@@ -44,14 +51,12 @@ export default function CarouselComponent() {
   useEffect(() => {
     const interval = setInterval(() => {
       scrollToNext()
-    }, 3000)
+    }, 7000)
 
     return () => clearInterval(interval)
   }, [scrollToNext])
 
-  const handleClick = (name) => {
-    console.log(name)
-  }
+
 
   return (
     <div className="w-full py-12 px-6 font-roboto-slab" style={{ backgroundColor: '#eb432f' }}>
@@ -66,7 +71,7 @@ export default function CarouselComponent() {
               loop: true,
             }}
           >
-            <CarouselContent className="-ml-2 md:-ml-4">
+            <CarouselContent className="-ml-2 md:-ml-4" >
               {shoes.map((shoe, index) => (
                 <CarouselItem key={index} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/5">
                   <Card 

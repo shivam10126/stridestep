@@ -28,6 +28,7 @@ import winter4 from "../assets/winter4.jpg"
 // Import slick carousel styles
 import "slick-carousel/slick/slick.css"
 import "slick-carousel/slick/slick-theme.css"
+import { Navigate, useNavigate } from 'react-router-dom'
 
 // Placeholder images (replace with your actual shoe images)
 const placeholderImages1 = [Sneakers,Running,Loafers,Oxfords]
@@ -35,7 +36,13 @@ const placeholderImages2 = [summer1,summer2,summer3,summer4]
 const placeholderImages3 = [winter1,winter2,winter3,winter4]
 const placeholderImages4 = [Boots,Espadrilles,Flops,Brogues,Heels,Sandals]
 
-const Collection = ({ title, images }) => {
+const Collection = ({ title, images, param }) => {
+  const navigate = useNavigate(); // Initialize useNavigate hook
+
+  const click = () => {
+    navigate(`./search?query=${param}&collection=${param}`);
+  }
+
   const settings = {
     dots: false,
     infinite: true,
@@ -43,16 +50,16 @@ const Collection = ({ title, images }) => {
     slidesToShow: 1,
     slidesToScroll: 1,
     autoplay: true,
-    autoplaySpeed: 3000,
+    autoplaySpeed: 5000,
     arrows: false,
   }
 
   return (
-    <Card className="w-full max-w-sm mx-auto bg-[#eb432f] border-4 border-[#6e36aa] font-roboto-slab">
-      <CardHeader style={{background:'#6e36aa', color:"white"}} classname='bg-[#6e36aa] text-white'>
-        <CardTitle >{title}</CardTitle>
+    <Card className="w-full max-w-sm mx-auto cursor-pointer bg-[#eb432f] border-4 border-[#6e36aa] font-roboto-slab" onClick={click}>
+      <CardHeader style={{ background: '#6e36aa', color: "white" }} className='bg-[#6e36aa] text-white'>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
-      <CardContent style={{padding:0}}>
+      <CardContent style={{ padding: 0 }}>
         <Slider {...settings}>
           {images.map((image, index) => (
             <div key={index} className="w-full h-64 flex justify-center align-middle">
@@ -66,15 +73,17 @@ const Collection = ({ title, images }) => {
         </Slider>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 export default function ShoeCollections() {
+
+
   const collections = [
-    { title: "New Arrivals", images: placeholderImages1 },
-    { title: "Summer Collection", images: placeholderImages2 },
-    { title: "Winter Collection", images: placeholderImages3 },
-    { title: "Flash Sale", images: placeholderImages4 },
+    { title: "New Arrivals", images: placeholderImages1 ,param:"New Arrivals" },
+    { title: "Summer Collection", images: placeholderImages2,param:"Summer Collection" },
+    { title: "Winter Collection", images: placeholderImages3,param:"Winter Collection" },
+    { title: "Flash Sale", images: placeholderImages4,param:"Flash Sale" },
   ]
 
   return (
@@ -82,7 +91,7 @@ export default function ShoeCollections() {
       <h1 className="text-3xl font-bold text-center mb-8 font-roboto-slab text-[white]">Stride Step Collections</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 ">
         {collections.map((collection, index) => (
-          <Collection key={index} title={collection.title} images={collection.images} />
+          <Collection key={index} title={collection.title} param={collection.param} images={collection.images} />
         ))}
       </div>
     </div>

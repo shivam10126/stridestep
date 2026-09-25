@@ -1,90 +1,81 @@
 import React, { useState, useEffect } from 'react';
-import { Search, User, Settings, ShoppingCart, LogIn, LogOut, ClipboardList, Menu, MoreVertical } from 'lucide-react';
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
-import { useNavigate, useLocation } from 'react-router-dom'; // Import useNavigate and useLocation
+import { Search, User, ShoppingCart, LogIn, LogOut, ClipboardList, Menu, MoreVertical, Home, Heart } from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 
-const Navbar = ({setFilterParams}) => {
-  const [username, setUsername] = useState(""); // Initialize with empty string
+const readUsername = () => {
+  try {
+    const authInfo = JSON.parse(localStorage.getItem('authInfo'));
+    return authInfo?.name || 'Guest';
+  } catch {
+    return 'Guest';
+  }
+};
+
+const Navbar = () => {
+  const [username, setUsername] = useState(readUsername);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState(""); // State for search bar
-  const navigate = useNavigate(); // Hook to navigate programmatically
-  const location = useLocation(); // Hook to get the current URL
+  const [searchTerm, setSearchTerm] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { count } = useCart();
+  const { count: wishCount } = useWishlist();
 
-  // Fetch username from localStorage when the component mounts
-  useEffect(() => {
-    const authInfo = JSON.parse(localStorage.getItem('authInfo')); // Assuming the username is stored as 'username'
-    if (authInfo) {
-      setUsername(authInfo.name);
-    } else {
-      setUsername('Guest'); // Fallback if no username is found
-    }
-  }, []);
-
-  // Fetch search term from URL params when the component mounts
+  // Keep the search box in step with the URL.
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    const searchParam = params.get('query'); // Extract query parameter
-    if (searchParam) {
-      setSearchTerm(searchParam); // Set search bar value
-    }
+    setSearchTerm(params.get('query') || '');
+    setIsMenuOpen(false);
   }, [location]);
 
-  // Handle the logout action
   const handleLogout = () => {
-    localStorage.removeItem('authInfo'); // Clear 'authInfo' from localStorage
-    
-  };
-
-  const handleLogin = () => {
     localStorage.removeItem('authInfo');
-    navigate('/SignUp');
+    setUsername('Guest');
+    navigate('/');
   };
 
-  // Handle search input change and navigate to the new URL
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-    localStorage.setItem("query",e.target.value);
+  const handleLogin = () => navigate('/signUp');
 
+  const submitSearch = () => {
+    const term = searchTerm.trim();
+    navigate(term ? `/search?query=${encodeURIComponent(term)}` : '/search');
   };
 
-  // Handle pressing Enter key to trigger search navigation
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && searchTerm) {
-      navigate(`/search?query=${searchTerm}`);
-    }
+    if (e.key === 'Enter') submitSearch();
   };
 
   const menuItems = [
-    { icon: User, label: username },
-    { icon: Settings, label: 'Settings' },
-    { icon: ShoppingCart, label: 'Cart' },
-    { icon: ClipboardList, label: 'Previous Orders' },
+    { icon: User, label: username, action: username === 'Guest' ? handleLogin : undefined },
+    { icon: Home, label: 'Home', action: () => navigate('/') },
+    { icon: Search, label: 'Shop', action: () => navigate('/search') },
+    { icon: Heart, label: wishCount > 0 ? `Wishlist (${wishCount})` : 'Wishlist', action: () => navigate('/wishlist') },
+    { icon: ShoppingCart, label: count > 0 ? `Cart (${count})` : 'Cart', action: () => navigate('/checkout') },
+    { icon: ClipboardList, label: 'Previous Orders', action: () => navigate('/orders') },
   ];
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleMenu = () => setIsMenuOpen((o) => !o);
 
   return (
-    <nav className="flex items-center justify-between px-4 py-2 bg-[#eb432f] text-white">
-      <a href="/" className="flex items-center space-x-2">
+    <nav className="relative flex items-center justify-between px-4 py-2 bg-[#eb432f] text-white">
+      <Link to="/" className="flex items-center space-x-2">
         <span className="text-4xl tracking-widest font-protest">StrideStep</span>
-      </a>
+      </Link>
 
       <div className="flex-1 max-w-xl mx-4 hidden md:block">
         <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-[#505b85]" />
-          <Input 
-            type="search" 
-            placeholder="Search..." 
-            value={searchTerm} // Set searchTerm state as the value of the input
-            onChange={handleSearch} // Update search term as user types
-            onKeyDown={handleKeyDown} // Navigate when "Enter" is pressed
+          <Input
+            type="search"
+            placeholder="Search..."
+            aria-label="Search products"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="pl-8 bg-white focus:ring-offset-0 focus-visible:ring-0 text-[black] placeholder:text-[#9e92aa]"
           />
         </div>
@@ -92,6 +83,30 @@ const Navbar = ({setFilterParams}) => {
 
       {/* Desktop menu */}
       <div className="hidden md:flex items-center space-x-4">
+        <Link
+          to="/wishlist"
+          aria-label={wishCount > 0 ? `Wishlist, ${wishCount} items` : 'Wishlist'}
+          className="relative p-1 rounded hover:bg-white/15 transition-colors"
+        >
+          <Heart className={`h-6 w-6 ${wishCount > 0 ? 'fill-white' : ''}`} />
+          {wishCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-[#6e36aa] text-white rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center text-[11px] font-bold">
+              {wishCount > 99 ? '99+' : wishCount}
+            </span>
+          )}
+        </Link>
+        <Link
+          to="/checkout"
+          aria-label={count > 0 ? `Cart, ${count} items` : 'Cart'}
+          className="relative p-1 rounded hover:bg-white/15 transition-colors"
+        >
+          <ShoppingCart className="h-6 w-6" />
+          {count > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 bg-[#6e36aa] text-white rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center text-[11px] font-bold">
+              {count > 99 ? '99+' : count}
+            </span>
+          )}
+        </Link>
         <span className="font-medium font-roboto-slab capitalize text-lg">{username}</span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -101,21 +116,24 @@ const Navbar = ({setFilterParams}) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56 bg-[#9e92aa] text-white border-[#9e92aa]">
-            {menuItems.map((item, index) => (
-              <DropdownMenuItem key={index} className="focus:bg-[#eb432f] focus:text-white">
+            {menuItems.map((item) => (
+              <DropdownMenuItem
+                key={item.label}
+                onClick={item.action}
+                className="focus:bg-[#eb432f] focus:text-white cursor-pointer"
+              >
                 <item.icon className="mr-2 h-4 w-4" />
                 <span className="font-roboto-slab text-base">{item.label}</span>
               </DropdownMenuItem>
             ))}
 
-            {/* Conditionally render Login/Logout based on username */}
             {username === 'Guest' ? (
-              <DropdownMenuItem onClick={handleLogin} className="focus:bg-[#eb432f] focus:text-white">
+              <DropdownMenuItem onClick={handleLogin} className="focus:bg-[#eb432f] focus:text-white cursor-pointer">
                 <LogIn className="mr-2 h-4 w-4" />
                 <span className="font-roboto-slab text-base">Login</span>
               </DropdownMenuItem>
             ) : (
-              <DropdownMenuItem onClick={handleLogout} className="focus:bg-[#eb432f] focus:text-white">
+              <DropdownMenuItem onClick={handleLogout} className="focus:bg-[#eb432f] focus:text-white cursor-pointer">
                 <LogOut className="mr-2 h-4 w-4" />
                 <span className="font-roboto-slab text-base">Log out</span>
               </DropdownMenuItem>
@@ -125,39 +143,61 @@ const Navbar = ({setFilterParams}) => {
       </div>
 
       {/* Mobile menu button */}
-      <div className="md:hidden">
-        <Button variant="ghost" onClick={toggleMenu} className="text-white">
-          <Menu className="h-6 w-6 hover:text-[#eb432f]" />
+      <div className="md:hidden flex items-center gap-1">
+        <Link to="/checkout" aria-label="Cart" className="relative p-2">
+          <ShoppingCart className="h-6 w-6" />
+          {count > 0 && (
+            <span className="absolute top-0 right-0 bg-[#6e36aa] text-white rounded-full min-w-[1.25rem] h-5 px-1 flex items-center justify-center text-[11px] font-bold">
+              {count > 99 ? '99+' : count}
+            </span>
+          )}
+        </Link>
+        <Button variant="ghost" onClick={toggleMenu} aria-expanded={isMenuOpen} aria-label="Toggle menu" className="text-white">
+          <Menu className="h-6 w-6" />
         </Button>
       </div>
 
       {/* Mobile menu */}
       {isMenuOpen && (
-        <div className="absolute top-14 left-0 right-0 bg-[#eb432f] md:hidden">
+        <div className="absolute top-full left-0 right-0 bg-[#eb432f] md:hidden z-40 shadow-lg">
           <div className="px-4 pt-2 pb-3 space-y-1">
-            {menuItems.map((item, index) => (
-              <a
-                key={index}
-                href="#"
-                onClick={item.action ? item.action : undefined} // Handle action for mobile menu
-                className="flex items-center space-x-2 px-3 py-2 rounded-md text-white hover:bg-[#d13a2b]"
+            <div className="relative mb-2">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-[#505b85]" />
+              <Input
+                type="search"
+                placeholder="Search..."
+                aria-label="Search products"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={handleKeyDown}
+                className="pl-8 bg-white text-[black] placeholder:text-[#9e92aa]"
+              />
+            </div>
+            {menuItems.map((item) => (
+              <button
+                type="button"
+                key={item.label}
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  item.action?.();
+                }}
+                className="w-full text-left flex items-center space-x-2 px-3 py-2 rounded-md text-white hover:bg-[#d13a2b]"
               >
                 <item.icon className="h-5 w-5" />
                 <span>{item.label}</span>
-              </a>
+              </button>
             ))}
 
-            {/* Conditionally render Login/Logout for mobile */}
             {username === 'Guest' ? (
-              <a href="#" onClick={handleLogin} className="flex items-center space-x-2 px-3 py-2 rounded-md text-white hover:bg-[#d13a2b]">
+              <button type="button" onClick={handleLogin} className="w-full text-left flex items-center space-x-2 px-3 py-2 rounded-md text-white hover:bg-[#d13a2b]">
                 <LogIn className="h-5 w-5" />
                 <span>Login</span>
-              </a>
+              </button>
             ) : (
-              <a href="#" onClick={handleLogout} className="flex items-center space-x-2 px-3 py-2 rounded-md text-white hover:bg-[#d13a2b]">
+              <button type="button" onClick={handleLogout} className="w-full text-left flex items-center space-x-2 px-3 py-2 rounded-md text-white hover:bg-[#d13a2b]">
                 <LogOut className="h-5 w-5" />
                 <span>Log out</span>
-              </a>
+              </button>
             )}
           </div>
         </div>

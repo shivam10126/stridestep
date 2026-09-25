@@ -61,9 +61,9 @@ export default function AuthForm() {
     <div className="flex items-center min-h-screen bg-cover bg-center" style={{backgroundImage:`url(${bgForm})`}}>
       <Card className="w-[450px] ml-28 bg-white bg-opacity-30 backdrop-blur-md">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-[#eb432f]">Side Step</CardTitle>
+          <CardTitle className="text-3xl font-bold text-[#eb432f]">Stride Step</CardTitle>
           <CardDescription className="text-[#505b85] font-semibold">
-            {isLogin ? 'Step into your account' : 'Join the Side Step family'}
+            {isLogin ? 'Step into your account' : 'Join the Stride Step family'}
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -1,61 +1,106 @@
-"use client"
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Star, MoveLeftIcon, ShoppingCart, Plus, Minus, Heart } from 'lucide-react';
+import { Button } from './ui/button';
+import { Card, CardContent } from './ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './ui/carousel';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Label } from './ui/label';
+import { Input } from './ui/input';
+import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import productInfo from '../assets/productInfo';
+import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
+import NotFound from '../pages/NotFound';
 
-import React, { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Star, ChevronLeft,MoveLeftIcon, ShoppingCart, Plus, Minus } from 'lucide-react'
-import { Button } from "./ui/button"
-import { Card, CardContent } from "./ui/card"
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "./ui/carousel"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion"
-import { RadioGroup, RadioGroupItem } from "./ui/radio-group"
-import { Label } from "./ui/label"
-import { Input } from "./ui/input"
-import { Textarea } from "./ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
+const findProduct = (name) => {
+  if (!name) return null;
+  const wanted = decodeURIComponent(name).trim().toLowerCase();
+  return productInfo.find((p) => p.name.toLowerCase() === wanted) || null;
+};
 
 const ProductDetail = () => {
   const location = useLocation();
-  const Navigate = useNavigate();
-  const { product } = location.state || {}; 
-  const { query } = location.state || ""; 
-  const [selectedSize, setSelectedSize] = useState(null)
-  const [selectedColor, setSelectedColor] = useState(null)
-  const [reviews, setReviews] = useState(product.reviews)
-  const [newReview, setNewReview] = useState({ name: '', rating: 0, review: '' })
-  const [showReviewForm, setShowReviewForm] = useState(false)
-  const [sizeSystem, setSizeSystem] = useState('US')
-  // console.log('link',query);
+  const navigate = useNavigate();
+  const { productName } = useParams();
+  const { addItem } = useCart();
+  const { has, toggle } = useWishlist();
 
-  
+  // Prefer the product passed through navigation state, but fall back to a
+  // lookup by name so a refresh or a shared link still works.
+  const product = location.state?.product || findProduct(productName);
+  const from = location.state?.from;
+
+  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [reviews, setReviews] = useState(product?.reviews || []);
+  const [newReview, setNewReview] = useState({ name: '', rating: 0, review: '' });
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [sizeSystem, setSizeSystem] = useState('US');
+  const [addError, setAddError] = useState('');
+
+  // Reset selections when navigating between products.
+  useEffect(() => {
+    setSelectedSize(null);
+    setSelectedColor(null);
+    setReviews(product?.reviews || []);
+    setAddError('');
+    window.scrollTo(0, 0);
+  }, [product]);
 
   const handleAddReview = (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (newReview.name && newReview.rating && newReview.review) {
-      setReviews([...reviews, newReview])
-      setNewReview({ name: '', rating: 0, review: '' })
-      setShowReviewForm(false)
+      setReviews([...reviews, newReview]);
+      setNewReview({ name: '', rating: 0, review: '' });
+      setShowReviewForm(false);
     }
-  }
+  };
 
+  const goBack = () => {
+    if (from) navigate(from);
+    else if (window.history.length > 1) navigate(-1);
+    else navigate('/search');
+  };
 
+  const handleAddToCart = () => {
+    if (selectedSize === null) {
+      setAddError('Please select a size.');
+      return;
+    }
+    if (!selectedColor) {
+      setAddError('Please select a color.');
+      return;
+    }
+    setAddError('');
+    addItem(product, { size: `${selectedSize} ${sizeSystem}`, color: selectedColor });
+  };
 
   if (!product) {
-    return <div>Product not found!</div>;
+    return (
+      <NotFound
+        withNav={false}
+        title="Product not found"
+        message="We couldn't find that shoe. It may have been renamed or removed."
+      />
+    );
   }
+
   return (
     <div className="container font-roboto-slab w-[80%] mx-auto px-4 py-8">
-      <div className='absolute top-20 bg-main-1 w-fit border cursor-pointer hover:bg-main-1/90 border-slate-600 px-4 py-2 rounded-lg text-white left-10 transition-all duration-200 flex gap-x-3' onClick={()=>Navigate(`${query}`)}>
-       <MoveLeftIcon />
-      </div>
+      <button
+        type="button"
+        aria-label="Go back"
+        className="absolute top-20 bg-main-1 w-fit border cursor-pointer hover:bg-main-1/90 border-slate-600 px-4 py-2 rounded-lg text-white left-10 transition-all duration-200 flex gap-x-3"
+        onClick={goBack}
+      >
+        <MoveLeftIcon />
+      </button>
       <div className="grid md:grid-cols-2 gap-8">
-      <div className="relative">
-          <Carousel className="w-full ">
+        <div className="relative">
+          <Carousel className="w-full">
             <CarouselContent>
               {product.carousel.map((image, index) => (
                 <CarouselItem key={index}>
@@ -75,50 +120,60 @@ const ProductDetail = () => {
         </div>
         <div>
           <h1 className="text-3xl text-main-2 font-bold mb-2">{product.name}</h1>
-          <p className="text-xl text-[#6e36aa] mb-4">{product.company} {product.brand}</p>
+          <p className="text-xl text-[#6e36aa] mb-4">
+            {product.company} {product.brand}
+          </p>
           <div className="flex items-center mb-4">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-5 h-5 ${
-                    i < Math.floor(product.rating)
-                      ? 'text-main-2 fill-main-2'
-                      : 'text-main-1 stroke-main-1'
-                  }`}
+                  className={`w-5 h-5 ${i < Math.floor(product.rating) ? 'text-main-2 fill-main-2' : 'text-main-1 stroke-main-1'}`}
                 />
               ))}
             </div>
-            <span className="ml-2 text-sm text-muted-foreground">
-              ({product.totalReviews} reviews)
-            </span>
+            <span className="ml-2 text-sm text-muted-foreground">({product.totalReviews} reviews)</span>
           </div>
           <p className="text-2xl text-main-2 font-bold mb-4">${product.price}</p>
           <p className="mb-4 text-main-1">{product.totalBought} bought</p>
-          <p className="mb-4 text-main-2"> <span className='text-main-1'>Type:</span> {product.type}</p>
-          <p className="mb-4 text-main-2"><span className='text-main-1'>Collection:</span> {product.collectionType}</p>
-          
+          <p className="mb-4 text-main-2">
+            <span className="text-main-1">Type:</span> {product.type}
+          </p>
+          <p className="mb-4 text-main-2">
+            <span className="text-main-1">Collection:</span> {product.collectionType}
+          </p>
+
           <div className="mb-6">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-semibold text-main-1">Select Size:</h3>
-              <Select value={sizeSystem} onValueChange={(value) => setSizeSystem(value)}>
+              <Select
+                value={sizeSystem}
+                onValueChange={(value) => {
+                  setSizeSystem(value);
+                  setSelectedSize(null);
+                }}
+              >
                 <SelectTrigger className="w-[100px]">
                   <SelectValue placeholder="Size system" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="US" className="text-main-2">US</SelectItem>
-                  <SelectItem value="UK" className="text-main-2">UK</SelectItem>
+                  <SelectItem value="US" className="text-main-2">
+                    US
+                  </SelectItem>
+                  <SelectItem value="UK" className="text-main-2">
+                    UK
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <RadioGroup value={selectedSize?.toString()} onValueChange={(value) => setSelectedSize(Number(value))}>
+            <RadioGroup value={selectedSize === null ? '' : selectedSize.toString()} onValueChange={(value) => setSelectedSize(Number(value))}>
               <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {product.specifications.availableSizes[sizeSystem].map((size) => (
                   <div key={size}>
                     <RadioGroupItem value={size.toString()} id={`size-${size}`} className="peer sr-only" />
                     <Label
                       htmlFor={`size-${size}`}
-                      className="flex items-center text-white  justify-center rounded-md border-2 border-main-2 bg-main-2 p-2 hover:bg-main-1 cursor-pointer peer-data-[state=checked]:border-[#eb432f] peer-data-[state=checked]:bg-[#6e36aa] peer-data-[state=checked]:text-white transition-all"
+                      className="flex items-center text-white justify-center rounded-md border-2 border-main-2 bg-main-2 p-2 hover:bg-main-1 cursor-pointer peer-data-[state=checked]:border-[#eb432f] peer-data-[state=checked]:bg-[#6e36aa] peer-data-[state=checked]:text-white transition-all"
                     >
                       {size}
                     </Label>
@@ -137,9 +192,9 @@ const ProductDetail = () => {
                     <RadioGroupItem value={color.name} id={`color-${color.name}`} className="peer sr-only" />
                     <Label
                       htmlFor={`color-${color.name}`}
-                      className="flex items-center justify-center rounded-md border-2 border-main-2 bg-main-2 p-2 hover:bg-main-1 text-white peer-data-[state=checked]:border-[#eb432f] peer-data-[state=checked]:bg-[#6e36aa] peer-data-[state=checked]:text-primary-foreground transition-all"
+                      className="flex items-center justify-center rounded-md border-2 border-main-2 bg-main-2 p-2 hover:bg-main-1 text-white cursor-pointer peer-data-[state=checked]:border-[#eb432f] peer-data-[state=checked]:bg-[#6e36aa] peer-data-[state=checked]:text-primary-foreground transition-all"
                     >
-                      <span className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: color.hex }}></span>
+                      <span className="w-4 h-4 rounded-full mr-2 border border-white/60" style={{ backgroundColor: color.hex }}></span>
                       {color.name}
                     </Label>
                   </div>
@@ -148,14 +203,36 @@ const ProductDetail = () => {
             </RadioGroup>
           </div>
 
-          <Button className="w-full bg-[#6e36aa] hover:bg-[#5305a7] transition-colors duration-100 mb-4">
-            <ShoppingCart className="mr-2  h-4 w-4" /> Add to Cart
-          </Button>
+          {addError && (
+            <p className="text-[#eb432f] font-semibold mb-2" role="alert">
+              {addError}
+            </p>
+          )}
+          <div className="flex gap-3 mb-4">
+            <Button
+              className="flex-1 bg-[#6e36aa] hover:bg-[#5305a7] transition-colors duration-100"
+              onClick={handleAddToCart}
+            >
+              <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              aria-pressed={has(product.name)}
+              className={`border-2 border-[#eb432f] transition-colors duration-100 ${
+                has(product.name) ? 'bg-[#eb432f] text-white hover:bg-[#d13a2b]' : 'bg-white text-[#eb432f] hover:bg-[#eb432f]/10'
+              }`}
+              onClick={() => toggle(product)}
+            >
+              <Heart className={`mr-2 h-4 w-4 ${has(product.name) ? 'fill-white' : ''}`} />
+              {has(product.name) ? 'Saved' : 'Wishlist'}
+            </Button>
+          </div>
         </div>
       </div>
 
       <Accordion type="single" collapsible className="mt-8">
-        <AccordionItem value="specifications" >
+        <AccordionItem value="specifications">
           <AccordionTrigger className="bg-main-1 px-7 text-white">Specifications</AccordionTrigger>
           <AccordionContent className="bg-main-2 px-6 text-white py-4">
             <ul className="list-disc pl-5 space-y-2">
@@ -166,9 +243,9 @@ const ProductDetail = () => {
             </ul>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="shipping" className="">
+        <AccordionItem value="shipping">
           <AccordionTrigger className="bg-main-1 px-7 text-white">Shipping Information</AccordionTrigger>
-          <AccordionContent className="bg-main-2  px-6 text-white py-4">
+          <AccordionContent className="bg-main-2 px-6 text-white py-4">
             <ul className="list-disc pl-5 space-y-2">
               <li>{product.shippingInfo.shippingCost}</li>
               <li>Estimated Delivery: {product.shippingInfo.estimatedDelivery}</li>
@@ -178,7 +255,7 @@ const ProductDetail = () => {
         </AccordionItem>
         <AccordionItem value="faq">
           <AccordionTrigger className="bg-main-1 px-7 text-white">FAQ</AccordionTrigger>
-          <AccordionContent className="bg-main-2  px-6 text-white py-4" >
+          <AccordionContent className="bg-main-2 px-6 text-white py-4">
             {product.faq.map((item, index) => (
               <div key={index} className="mb-4">
                 <h4 className="font-semibold">{item.question}</h4>
@@ -204,14 +281,16 @@ const ProductDetail = () => {
             )}
           </Button>
         </div>
-        
+
         {showReviewForm && (
           <Card className="mb-8 bg-main-2 text-white">
             <CardContent className="p-6">
               <h3 className="text-xl font-bold mb-4">Write a Review</h3>
               <form onSubmit={handleAddReview} className="space-y-4">
                 <div>
-                  <Label htmlFor="name" className="ml-2">Name</Label>
+                  <Label htmlFor="name" className="ml-2">
+                    Name
+                  </Label>
                   <Input
                     id="name"
                     value={newReview.name}
@@ -221,12 +300,15 @@ const ProductDetail = () => {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="rating" className="ml-2">Rating</Label>
-                  <div className="flex gap-2">
+                  <Label htmlFor="rating" className="ml-2">
+                    Rating
+                  </Label>
+                  <div className="flex gap-2" id="rating">
                     {[1, 2, 3, 4, 5].map((rating) => (
                       <Button
                         key={rating}
                         type="button"
+                        aria-label={`${rating} star${rating > 1 ? 's' : ''}`}
                         variant={newReview.rating >= rating ? 'default' : 'outline'}
                         size="sm"
                         className="bg-main-1 mt-1 hover:text-white hover:bg-[#5302a9]"
@@ -238,7 +320,9 @@ const ProductDetail = () => {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="review" className="ml-2">Review</Label>
+                  <Label htmlFor="review" className="ml-2">
+                    Review
+                  </Label>
                   <Textarea
                     id="review"
                     value={newReview.review}
@@ -247,7 +331,9 @@ const ProductDetail = () => {
                     required
                   />
                 </div>
-                <Button type="submit" className="bg-main-1 hover:bg-[#5202a7]">Submit Review</Button>
+                <Button type="submit" className="bg-main-1 hover:bg-[#5202a7]">
+                  Submit Review
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -263,9 +349,7 @@ const ProductDetail = () => {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-4 h-4 ${
-                          i < review.rating ? 'text-main-2 fill-main-2' : 'text-white stroke-white'
-                        }`}
+                        className={`w-4 h-4 ${i < review.rating ? 'text-main-2 fill-main-2' : 'text-white stroke-white'}`}
                       />
                     ))}
                   </div>
@@ -277,7 +361,7 @@ const ProductDetail = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProductDetail
+export default ProductDetail;

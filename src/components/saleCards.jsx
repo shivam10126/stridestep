@@ -28,7 +28,7 @@ import winter4 from "../assets/winter4.jpg"
 // Import slick carousel styles
 import "slick-carousel/slick/slick.css"
 import "slick-carousel/slick/slick-theme.css"
-import { Navigate, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 // Placeholder images (replace with your actual shoe images)
 const placeholderImages1 = [Sneakers,Running,Loafers,Oxfords]
@@ -40,7 +40,7 @@ const Collection = ({ title, images, param }) => {
   const navigate = useNavigate(); // Initialize useNavigate hook
 
   const click = () => {
-    navigate(`./search?query=${param}&collection=${param}`);
+    navigate(`/search?collection=${encodeURIComponent(param)}`);
   }
 
   const settings = {

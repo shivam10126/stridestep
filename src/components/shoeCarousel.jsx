@@ -39,7 +39,7 @@ export default function CarouselComponent() {
   const navigate = useNavigate(); 
 
   const handleClick = (param) => {
-    navigate(`./search?query=${param}&type=${param}`);
+    navigate(`/search?type=${encodeURIComponent(param)}`);
   }
 
   const scrollToNext = useCallback(() => {
@@ -80,7 +80,7 @@ export default function CarouselComponent() {
                   >
                     <CardContent className="p-0">
                       <div className="w-full h-48 bg-gray-200 rounded-t-lg  overflow-hidden flex items-center justify-center">
-                        <img src={shoe.image} className="text-gray-500 h-fit w-fit text-lg"></img>
+                        <img src={shoe.image} alt={shoe.name} className="text-gray-500 h-fit w-fit text-lg" />
                       </div>
                       <div className="p-4 bg-[#6e36aa] relative rounded-b-lg text-white ">
                         <h3 className="text-lg font-semibold text-center">{shoe.name}</h3>

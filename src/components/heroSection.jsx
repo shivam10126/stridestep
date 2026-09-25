@@ -1,31 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const slides = [
   {
     image: "https://imgix.bustle.com/uploads/image/2020/6/1/c3acd77b-4e10-4d40-b8d0-a24b499349ba-shoes.png?w=400&h=300&fit=crop&crop=focalpoint&q=50&dpr=2&fp-x=0.47137150466045274&fp-y=0.4652777777777778",
     heading: "Step into Comfort with Stride Step",
     subheading: "Your Journey Begins with the Perfect Fit",
-    link:"./search"
+    link:"/search"
   },
   {
     image: "https://images.unsplash.com/photo-1695073621086-aa692bc32a3d?fm=jpg&q=60&w=3000&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8bmlrZSUyMHNob2V8ZW58MHx8MHx8fDA%3D",
     heading: "Flash Sale!",
     subheading: "Up to 50% Off on Selected Styles",
-    link:"./search?query=Flash%20Sale&collection=Flash%20Sale"
+    link:"/search?collection=Flash%20Sale"
   },
   {
     image: "https://images.pexels.com/photos/1598505/pexels-photo-1598505.jpeg?cs=srgb&dl=pexels-mnzoutfits-1598505.jpg&fm=jpg",
     heading: "New Winter Collection",
     subheading: "Stay Warm and Stylish This Season",
-    link:"./search?query=Winter%20Collection&collection=Winter%20Collection"
+    link:"/search?collection=Winter%20Collection"
   },
   {
     image: "https://wallpapercave.com/wp/wp9637105.jpg",
     heading: "Free Delivery",
-    subheading: "On Orders Over ₹5000",
-    link:"./search"
+    subheading: "On Orders Over $50",
+    link:"/search"
   }
 ];
 
@@ -43,7 +43,7 @@ function Button({ className, onClick, children }) {
 export default function HeroSection() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -54,7 +54,7 @@ export default function HeroSection() {
   };
 
   useEffect(() => {
-    const timer = setInterval(nextSlide, 5000);
+    const timer = setInterval(() => setCurrentSlide((prev) => (prev + 1) % slides.length), 5000);
     return () => clearInterval(timer);
   }, []);
 
@@ -81,7 +81,7 @@ export default function HeroSection() {
             </p>
             <Button 
               className="text-white bg-[#6e36aa] px-8 py-3 rounded-full text-xl focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-opacity-50"
-              onClick={() => {Navigate(slide.link)} }
+              onClick={() => navigate(slide.link)}
             >
               Shop Now
             </Button>

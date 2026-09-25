@@ -5,7 +5,12 @@ import { Button } from "./ui/button"
 import { Facebook, Instagram, Twitter, MapPin, Phone, Mail, ArrowRight } from "lucide-react"
 
 const Footer = () => {
-  const quickLinks = ["Shop", "About Us", "Contact Us", "FAQ", "Returns & Shipping"]
+  const quickLinks = [
+    { label: "Shop", to: "/search" },
+    { label: "My Orders", to: "/orders" },
+    { label: "Cart", to: "/checkout" },
+    { label: "Account", to: "/signUp" },
+  ]
   const legalLinks = ["Privacy Policy", "Terms & Conditions", "Cookie Policy"]
 
   return (
@@ -32,10 +37,10 @@ const Footer = () => {
             <h3 className="text-lg font-semibold  text-[#eb432f] mb-4">Quick Links</h3>
             <ul className="space-y-2">
               {quickLinks.map((item) => (
-                <li key={item}>
-                  <Link to={`/${item.toLowerCase().replace(/ & /g, '-').replace(/ /g, '-')}`} className=" transition-colors flex items-center hover:text-[#eb432f] group">
+                <li key={item.label}>
+                  <Link to={item.to} className=" transition-colors flex items-center hover:text-[#eb432f] group">
                     <ArrowRight className="h-4 w-4 mr-2 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}
